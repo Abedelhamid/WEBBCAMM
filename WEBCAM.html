@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Webcam Access Example</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+    }
+
+    .container {
+      text-align: center;
+    }
+
+    video, canvas {
+      display: block;
+      margin: 10px auto;
+      border: 2px solid #333;
+    }
+
+    button, a {
+      display: block;
+      margin: 10px auto;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    button:hover, a:hover {
+      background-color: #0056b3;
+    }
+
+    a {
+      display: none;
+    }
+
+    canvas {
+      border: 5px solid #ff0000;
+    }
+
+    .filters {
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Webcam Access Example</h1>
+    <video id="video" autoplay></video>
+    <button id="snap">Capture</button>
+    <div class="filters">
+      <label for="filter">Choose a filter:</label>
+      <select id="filter">
+        <option value="none">None</option>
+        <option value="grayscale(100%)">Grayscale</option>
+        <option value="sepia(100%)">Sepia</option>
+        <option value="invert(100%)">Invert</option>
+        <option value="blur(5px)">Blur</option>
+        <option value="brightness(150%)">Brightness</option>
+      </select>
+    </div>
+    <canvas id="canvas"></canvas>
+    <a id="download" download="captured-image.png">Download Image</a>
+  </div>
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const snap = document.getElementById('snap');
+    const download = document.getElementById('download');
+    const filter = document.getElementById('filter');
+    const context = canvas.getContext('2d');
+
+    // Request access to the user's webcam
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        console.error("Error accessing webcam: ", err);
+      });
+
+    // Capture the current frame from the video
+    snap.addEventListener('click', () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      // Apply a mirror effect
+      context.translate(canvas.width, 0);
+      context.scale(-1, 1);
+
+      // Draw the video frame onto the canvas
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Reset the transformation matrix to the default state
+      context.setTransform(1, 0, 0, 1, 0, 0);
+
+      // Apply selected filter
+      context.filter = filter.value;
+
+      // Redraw the image with the filter
+      context.drawImage(canvas, 0, 0, canvas.width, canvas.height);
+
+      const dataURL = canvas.toDataURL('image/png');
+      download.href = dataURL;
+      download.style.display = 'block';
+    });
+
+    // Update filter in real-time while capturing
+    filter.addEventListener('change', () => {
+      context.filter = filter.value;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    });
+  </script>
+</body>
+</html>
